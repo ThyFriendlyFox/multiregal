@@ -1,0 +1,7 @@
+[project]
+name = "regression_analyzer"
+version = "0.1.0"
+description = "Automatic multivariable regression analysis with intelligent factor determination"
+
+[tool.adk.agents]
+regression_analyzer = "regression_analyzer.agent:root_agent" 
