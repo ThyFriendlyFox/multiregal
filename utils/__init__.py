@@ -1,1 +1,1 @@
-# Utils package for MultuRegal web interface 
+# Utils package for MultiRegal web interface 

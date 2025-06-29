@@ -48,7 +48,7 @@ def initialize_session_state():
 def main():
     """Main application function."""
     st.set_page_config(
-        page_title="MultuRegal - Automatic Regression Analysis",
+        page_title="MultiRegal - Automatic Regression Analysis",
         page_icon="📊",
         layout="wide",
         initial_sidebar_state="expanded"
@@ -57,7 +57,7 @@ def main():
     initialize_session_state()
     
     # Header
-    st.title("🔮 MultuRegal")
+    st.title("🔮 MultiRegal")
     st.markdown("### Automatic Multivariable Regression Analysis Calculator")
     st.markdown("*Discover the most important factors affecting your outcomes with AI-powered analysis*")
     
@@ -65,25 +65,38 @@ def main():
     with st.sidebar:
         st.header("🛠️ Configuration")
         
-        # Demo data option
-        use_demo_data = st.checkbox("Use Demo Data (House Prices)", value=False)
+        # Demo data options
+        st.subheader("📁 Demo Data Options")
+        demo_option = st.radio(
+            "Choose demo dataset:",
+            ["None", "Clean Demo Data", "Dirty Demo Data"],
+            index=0
+        )
         
-        if use_demo_data:
-            st.info("Using sample house price data for demonstration")
-            # Load demo data
+        if demo_option == "Clean Demo Data":
+            st.info("🧹 Using clean sample house price data")
             try:
                 demo_df = pd.read_csv("sample_data.csv")
                 st.session_state.uploaded_data = demo_df
             except Exception as e:
-                st.error(f"Error loading demo data: {e}")
-                use_demo_data = False
+                st.error(f"Error loading clean demo data: {e}")
+                demo_option = "None"
+                
+        elif demo_option == "Dirty Demo Data":
+            st.warning("🚨 Using dirty sample data (shows data cleaning capabilities)")
+            try:
+                demo_df = pd.read_csv("dirty_sample_data.csv")
+                st.session_state.uploaded_data = demo_df
+            except Exception as e:
+                st.error(f"Error loading dirty demo data: {e}")
+                demo_option = "None"
     
     # Main content area
     col1, col2 = st.columns([2, 1])
     
     with col1:
         # File upload section
-        if not use_demo_data:
+        if demo_option == "None":
             st.header("📁 Upload Your Data")
             uploaded_file = st.file_uploader(
                 "Choose a CSV file",
@@ -105,8 +118,25 @@ def main():
             df = st.session_state.uploaded_data
             
             # Display data preview
-            with st.expander("📊 Data Preview", expanded=True):
+            with st.expander("📊 Data Preview (Raw Data)", expanded=True):
                 display_data_preview(df, max_rows=50)
+            
+            # Show data quality issues if using dirty data
+            if demo_option == "Dirty Demo Data":
+                with st.expander("🚨 Data Quality Issues in Demo Dataset", expanded=True):
+                    st.markdown("""
+                    **This dirty dataset demonstrates common data quality issues:**
+                    - 🔄 **Duplicate rows**: Same house listed multiple times
+                    - 💰 **Currency formatting**: Prices with $ symbols and commas
+                    - 📏 **Inconsistent number formats**: "1,200" vs 1200 vs "28 00"
+                    - ❌ **Missing values**: Empty cells and "N/A" entries
+                    - 🔤 **Text in numeric columns**: "thousand", "zero", "TRUE"
+                    - 📊 **Extreme outliers**: House with 999,999 sq ft and $9,999,999 price
+                    - 🏷️ **Messy column names**: Mixed case, spaces, special characters
+                    - 🔢 **Mixed data types**: Numbers stored as text
+                    
+                    **MultiRegal will automatically clean all these issues!**
+                    """)
             
             # Data validation
             st.header("🔍 Data Validation")
@@ -297,12 +327,13 @@ def display_analysis_results():
     results = st.session_state.analysis_results
     
     # Create tabs for different sections
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "🎯 Key Findings", 
         "📊 Feature Importance", 
         "🤖 Model Comparison", 
         "📐 Formulas", 
-        "💡 Insights & Recommendations"
+        "💡 Insights & Recommendations",
+        "🧹 Data Cleaning Report"
     ])
     
     with tab1:
@@ -401,6 +432,73 @@ def display_analysis_results():
     with tab5:
         st.subheader("💡 Analysis Insights")
         display_insights(results['insights'])
+    
+    with tab6:
+        st.subheader("🧹 Data Cleaning Report")
+        
+        # Display cleaning report if available
+        data_summary = results.get('data_summary', {})
+        cleaning_report = data_summary.get('cleaning_report', {})
+        
+        if cleaning_report and cleaning_report.get('status') == 'success':
+            # Overview metrics
+            col_a, col_b, col_c = st.columns(3)
+            
+            original_shape = cleaning_report.get('original_shape', (0, 0))
+            final_shape = cleaning_report.get('final_shape', (0, 0))
+            rows_removed = cleaning_report.get('rows_removed', 0)
+            
+            with col_a:
+                st.metric("Original Rows", original_shape[0])
+            with col_b:
+                st.metric("Final Rows", final_shape[0], delta=-(rows_removed))
+            with col_c:
+                st.metric("Columns", final_shape[1])
+            
+            # Cleaning steps performed
+            steps_performed = cleaning_report.get('steps_performed', [])
+            if steps_performed:
+                st.subheader("🔧 Cleaning Steps Performed")
+                step_names = {
+                    "duplicate_removal": "🔄 Removed duplicate rows",
+                    "column_name_cleaning": "🏷️ Standardized column names", 
+                    "data_type_conversion": "🔢 Converted data types to numeric",
+                    "missing_value_imputation": "❌ Imputed missing values",
+                    "outlier_removal": "📊 Removed statistical outliers",
+                    "final_validation": "✅ Final data validation"
+                }
+                
+                for step in steps_performed:
+                    st.write(f"✅ {step_names.get(step, step)}")
+            
+            # Issues found and addressed
+            issues_found = cleaning_report.get('issues_found', [])
+            if issues_found:
+                st.subheader("⚠️ Issues Addressed")
+                for issue in issues_found:
+                    st.write(f"• {issue}")
+            
+            # Show before/after comparison if dirty data was used
+            if original_shape != final_shape or steps_performed:
+                st.subheader("📈 Before vs After")
+                
+                before_after_df = pd.DataFrame({
+                    'Metric': ['Rows', 'Columns', 'Data Quality'],
+                    'Before': [original_shape[0], original_shape[1], 'Dirty'],
+                    'After': [final_shape[0], final_shape[1], 'Clean'],
+                    'Change': [f"-{rows_removed}", "0", "✅ Improved"]
+                })
+                
+                st.dataframe(before_after_df, use_container_width=True, hide_index=True)
+            
+            # Show detailed cleaning log
+            cleaning_log = cleaning_report.get('cleaning_log', [])
+            if cleaning_log:
+                with st.expander("📋 Detailed Cleaning Log"):
+                    for log_entry in cleaning_log:
+                        st.write(f"🧹 {log_entry}")
+        else:
+            st.info("No cleaning report available (data may have been already clean)")
     
     # Download section
     st.header("💾 Export Results")

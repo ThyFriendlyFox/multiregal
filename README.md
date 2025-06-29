@@ -1,4 +1,4 @@
-# 🔮 MultuRegal - Automatic Multivariable Regression Analysis Calculator
+# 🔮 MultiRegal - Automatic Multivariable Regression Analysis Calculator
 
 An intelligent tool that automatically identifies the most important factors affecting your outcomes through AI-powered regression analysis.
 
@@ -6,10 +6,12 @@ An intelligent tool that automatically identifies the most important factors aff
 
 - **🤖 AI-Powered Factor Identification**: Uses multiple statistical methods and LLM intelligence to identify the most important variables
 - **📊 Interactive Web Interface**: Beautiful, user-friendly Streamlit interface for easy data analysis
+- **🧹 Advanced Data Cleaning**: Automatically handles dirty data including missing values, duplicates, outliers, mixed data types, and inconsistent formatting
 - **🔍 Comprehensive Analysis**: Performs correlation analysis, feature importance ranking, and regression modeling
 - **📐 Formula Generation**: Creates both precise and simplified mathematical formulas
 - **📈 Rich Visualizations**: Interactive charts, correlation heatmaps, and model comparisons
 - **💡 Smart Insights**: LLM-generated recommendations and actionable insights
+- **📋 Detailed Reports**: Complete cleaning and analysis reports with step-by-step documentation
 - **💾 Export Capabilities**: Download results in JSON and CSV formats
 
 ## 🚀 Quick Start
@@ -63,19 +65,35 @@ The web interface will open at `http://localhost:8501`
 - **🤖 Model Comparison**: Performance metrics across different models
 - **📐 Formulas**: Generated mathematical formulas
 - **💡 Insights**: AI-powered recommendations and insights
+- **🧹 Data Cleaning Report**: Detailed report of all cleaning steps performed
 
 ### 5. **Export Results**
 - Download comprehensive reports in JSON format
 - Export factor rankings as CSV
 - Save results for further analysis
 
+## 🧹 Data Cleaning Capabilities
+
+MultiRegal automatically handles messy, real-world data! It can clean:
+
+- **🔄 Duplicate Records**: Automatically removes identical rows
+- **💰 Currency & Number Formatting**: Handles "$1,234", "1,234.56", "€123", percentages
+- **❌ Missing Values**: Smart imputation using mean/median based on data distribution
+- **🔤 Mixed Data Types**: Converts "TRUE/FALSE", "Yes/No" to numeric, handles text in number columns
+- **📊 Statistical Outliers**: Removes extreme values using IQR or Z-score methods
+- **🏷️ Column Names**: Standardizes messy column names (spaces, special characters)
+- **🔢 Data Type Issues**: Converts text representations to proper numeric formats
+- **📏 Inconsistent Formats**: Handles spaces in numbers ("12 34" → 1234)
+
+**Try the "Dirty Demo Data" option to see cleaning in action!**
+
 ## 📋 Data Requirements
 
 - **Format**: CSV file
-- **Minimum Size**: At least 10 rows
-- **Columns**: At least 2 numeric columns
-- **Missing Data**: Less than 50% missing values
-- **Variable Types**: Numeric data for regression analysis
+- **Minimum Size**: At least 10 rows (after cleaning)
+- **Columns**: At least 2 numeric columns (after conversion)
+- **Missing Data**: Up to 50% missing values (will be cleaned automatically)
+- **Variable Types**: Any data types (will be converted to numeric where possible)
 
 ## 🛠️ Programmatic Usage
 

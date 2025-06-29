@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Launch script for MultuRegal - Automatic Multivariable Regression Analysis Calculator
+Launch script for MultiRegal - Automatic Multivariable Regression Analysis Calculator
 
 This script launches the Streamlit web interface for the regression analyzer.
 """
@@ -13,7 +13,7 @@ from pathlib import Path
 
 def main():
     """Launch the Streamlit application."""
-    print("🔮 Starting MultuRegal - Automatic Regression Analysis Calculator")
+    print("🔮 Starting MultiRegal - Automatic Regression Analysis Calculator")
     print("=" * 60)
     
     # Check if we're in the right directory
@@ -40,7 +40,7 @@ def main():
         ])
         
     except KeyboardInterrupt:
-        print("\n👋 Shutting down MultuRegal...")
+        print("\n👋 Shutting down MultiRegal...")
         return 0
     except Exception as e:
         print(f"❌ Error launching application: {e}")

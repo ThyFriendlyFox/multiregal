@@ -28,62 +28,93 @@ except ImportError:
 
 def load_and_preprocess_data(data_input: str, target_column: str) -> Dict[str, Any]:
     """
-    Load data from CSV content or file path and preprocess it.
+    Load data from CSV content or file path and preprocess it with comprehensive cleaning.
     
     Args:
         data_input: Either CSV file path or CSV content as string
         target_column: Name of the target/outcome column
     
     Returns:
-        Dict containing preprocessed data information
+        Dict containing preprocessed data information and cleaning report
     """
     try:
-        # Try to read as file path first, then as CSV content
-        try:
-            if data_input.endswith('.csv'):
-                df = pd.read_csv(data_input)
-            else:
-                # Assume it's CSV content
-                df = pd.read_csv(io.StringIO(data_input))
-        except:
-            # If reading as file fails, try as CSV content
-            df = pd.read_csv(io.StringIO(data_input))
+        # Import the data cleaner
+        from .data_cleaner import clean_data_for_analysis
         
-        # Basic data validation
-        if target_column not in df.columns:
+        # Clean the data using the comprehensive data cleaner
+        df_clean, cleaning_report = clean_data_for_analysis(data_input, target_column, verbose=False)
+        
+        if cleaning_report["status"] != "success":
             return {
                 "status": "error",
-                "message": f"Target column '{target_column}' not found. Available columns: {list(df.columns)}"
+                "message": cleaning_report.get("message", "Data cleaning failed"),
+                "cleaning_report": cleaning_report
+            }
+        
+        # Validate we have a cleaned dataset
+        if df_clean.empty:
+            return {
+                "status": "error",
+                "message": "No data remaining after cleaning process"
+            }
+        
+        # Validate target column exists after cleaning
+        if target_column not in df_clean.columns:
+            return {
+                "status": "error",
+                "message": f"Target column '{target_column}' not found after cleaning. Available columns: {list(df_clean.columns)}"
             }
         
         # Separate features and target
-        y = df[target_column]
-        X = df.drop(columns=[target_column])
+        y = df_clean[target_column]
+        X = df_clean.drop(columns=[target_column])
         
-        # Handle missing values
-        X = X.select_dtypes(include=[np.number])  # Keep only numeric columns
-        X = X.fillna(X.mean())  # Fill NaN with mean
-        y = y.fillna(y.mean())
+        # Ensure we have numeric data for analysis
+        X = X.select_dtypes(include=[np.number])
         
-        # Basic statistics
-        data_info = {
-            "status": "success",
-            "shape": df.shape,
-            "target_column": target_column,
-            "feature_columns": list(X.columns),
-            "missing_values": df.isnull().sum().to_dict(),
-            "data_types": df.dtypes.astype(str).to_dict(),
-            "target_stats": {
+        if X.empty:
+            return {
+                "status": "error",
+                "message": "No numeric features available for analysis after cleaning"
+            }
+        
+        # Calculate statistics
+        try:
+            target_stats = {
                 "mean": float(y.mean()),
                 "std": float(y.std()),
                 "min": float(y.min()),
-                "max": float(y.max())
-            },
-            "feature_correlations": X.corr().to_dict(),
-            "target_correlations": X.corrwith(y).to_dict()
+                "max": float(y.max()),
+                "count": int(y.count())
+            }
+        except:
+            target_stats = {"error": "Could not calculate target statistics"}
+        
+        try:
+            feature_correlations = X.corr().to_dict()
+        except:
+            feature_correlations = {}
+        
+        try:
+            target_correlations = X.corrwith(y).to_dict()
+        except:
+            target_correlations = {}
+        
+        # Prepare data info
+        data_info = {
+            "status": "success",
+            "original_shape": cleaning_report.get("original_shape", df_clean.shape),
+            "final_shape": df_clean.shape,
+            "target_column": target_column,
+            "feature_columns": list(X.columns),
+            "data_types": df_clean.dtypes.astype(str).to_dict(),
+            "target_stats": target_stats,
+            "feature_correlations": feature_correlations,
+            "target_correlations": target_correlations,
+            "cleaning_report": cleaning_report
         }
         
-        # Store preprocessed data (in a real app, you'd use session state)
+        # Store preprocessed data
         data_info["X_data"] = X.to_dict('records')
         data_info["y_data"] = y.tolist()
         
