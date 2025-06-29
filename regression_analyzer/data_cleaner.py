@@ -66,21 +66,36 @@ class DataCleaner:
             
             # Step 3: Map target column to cleaned name
             original_target = target_column
+            self.log(f"Looking for target column '{original_target}' in original columns: {list(df.columns)}")
+            
             # Find the cleaned version of the target column
             target_column_clean = None
-            for original, cleaned in zip(df.columns, df_clean.columns):
+            column_mapping = list(zip(df.columns, df_clean.columns))
+            self.log(f"Column mapping: {column_mapping}")
+            
+            for original, cleaned in column_mapping:
                 if original == target_column:
                     target_column_clean = cleaned
+                    self.log(f"Found mapping: '{original}' -> '{cleaned}'")
                     break
+            
+            if target_column_clean is None:
+                # Try case-insensitive matching as fallback
+                for original, cleaned in column_mapping:
+                    if original.lower() == target_column.lower():
+                        target_column_clean = cleaned
+                        self.log(f"Found case-insensitive mapping: '{original}' -> '{cleaned}'")
+                        break
             
             if target_column_clean is None:
                 return df, {
                     "status": "error", 
-                    "message": f"Target column '{original_target}' not found. Available: {list(df.columns)}"
+                    "message": f"Target column '{original_target}' not found after cleaning. Available columns: {list(df_clean.columns)}"
                 }
             
             # Update target column name to cleaned version
             target_column = target_column_clean
+            self.log(f"Target column '{original_target}' mapped to '{target_column_clean}'")
             
             # Step 4: Handle mixed data types and convert to numeric
             df_clean, conversion_info = self._handle_mixed_types(df_clean, target_column)

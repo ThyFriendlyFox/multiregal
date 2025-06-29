@@ -58,19 +58,40 @@ def load_and_preprocess_data(data_input: str, target_column: str) -> Dict[str, A
                 "message": "No data remaining after cleaning process"
             }
         
-        # Validate target column exists after cleaning
-        if target_column not in df_clean.columns:
+        # Get the cleaned target column name
+        original_target = target_column
+        target_column_clean = None
+        
+        # The cleaner maps column names, find the cleaned target column name
+        if target_column.lower() in [col.lower() for col in df_clean.columns]:
+            # Find exact match (case insensitive)
+            for col in df_clean.columns:
+                if col.lower() == target_column.lower():
+                    target_column_clean = col
+                    break
+        
+        if target_column_clean is None:
             return {
                 "status": "error",
-                "message": f"Target column '{target_column}' not found after cleaning. Available columns: {list(df_clean.columns)}"
+                "message": f"Target column '{original_target}' not found after cleaning. Available columns: {list(df_clean.columns)}"
+            }
+        
+        # Validate target column exists after cleaning
+        if target_column_clean not in df_clean.columns:
+            return {
+                "status": "error",
+                "message": f"Target column '{target_column_clean}' not found after cleaning. Available columns: {list(df_clean.columns)}"
             }
         
         # Separate features and target
-        y = df_clean[target_column]
-        X = df_clean.drop(columns=[target_column])
+        y = df_clean[target_column_clean]
         
-        # Ensure we have numeric data for analysis
-        X = X.select_dtypes(include=[np.number])
+        # Only include numeric columns for analysis (exclude target and identifier columns)
+        numeric_cols = df_clean.select_dtypes(include=[np.number]).columns.tolist()
+        if target_column_clean in numeric_cols:
+            numeric_cols.remove(target_column_clean)
+        
+        X = df_clean[numeric_cols]
         
         if X.empty:
             return {
@@ -105,7 +126,7 @@ def load_and_preprocess_data(data_input: str, target_column: str) -> Dict[str, A
             "status": "success",
             "original_shape": cleaning_report.get("original_shape", df_clean.shape),
             "final_shape": df_clean.shape,
-            "target_column": target_column,
+            "target_column": target_column_clean,
             "feature_columns": list(X.columns),
             "data_types": df_clean.dtypes.astype(str).to_dict(),
             "target_stats": target_stats,
