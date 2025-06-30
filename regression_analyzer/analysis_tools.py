@@ -515,7 +515,7 @@ def create_analysis_summary(data_info: Dict[str, Any], factor_analysis: Dict[str
     # Data overview
     if data_info["status"] == "success":
         summary_parts.append(f"\n## DATA OVERVIEW")
-        summary_parts.append(f"Dataset shape: {data_info['shape']}")
+        summary_parts.append(f"Dataset shape: {data_info.get('final_shape', data_info.get('shape', 'Unknown'))}")
         summary_parts.append(f"Target variable: {data_info['target_column']}")
         summary_parts.append(f"Available features: {len(data_info['feature_columns'])}")
     
